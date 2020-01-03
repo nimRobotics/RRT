@@ -82,8 +82,8 @@ def rnd_point():
 
 
 # loading the maze
-img = cv2.imread('world.png',0) # load grayscale image
-img2 = cv2.imread('world.png',1)
+img = cv2.imread('world2.png',0) # load grayscale image
+img2 = cv2.imread('world2.png',1)
 start = (20,20) # starting coordinate
 end = (450,250) # target coordinate
 stepSize = 20 # stepsize for RRT
@@ -130,10 +130,11 @@ while pathFound==False:
         cv2.line(img2, (int(tx),int(ty)), (end[0],end[1]), (255,0,0), thickness=2, lineType=8)
 
         print("Path has been found")
-        print("path_x",node_list[i].path_x)
+        #print("path_x",node_list[i].path_x)
         for j in range(len(node_list[i].path_x)-1):
             cv2.line(img2, (int(node_list[i].path_x[j]),int(node_list[i].path_y[j])), (int(node_list[i].path_x[j+1]),int(node_list[i].path_y[j+1])), (255,0,0), thickness=2, lineType=8)
-        cv2.waitKey(1)
+        # cv2.waitKey(1)
+        cv2.imwrite("media/"+str(i)+".jpg",img2)
         cv2.imwrite("out.jpg",img2)
         break
 
@@ -151,6 +152,7 @@ while pathFound==False:
         # display
         cv2.circle(img2, (int(tx),int(ty)), 2,(0,0,255),thickness=3, lineType=8)
         cv2.line(img2, (int(tx),int(ty)), (int(node_list[nearest_ind].x),int(node_list[nearest_ind].y)), (0,255,0), thickness=1, lineType=8)
+        cv2.imwrite("media/"+str(i)+".jpg",img2)
         cv2.imshow("sdc",img2)
         cv2.waitKey(1)
         continue

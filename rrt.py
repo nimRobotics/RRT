@@ -11,14 +11,16 @@ import cv2
 import numpy as np
 import math
 import random
+import argparse
+import os
 
 class Nodes:
-    """Class to store the RRT node coordinates and node path"""
+    """Class to store the RRT graph"""
     def __init__(self, x,y):
         self.x = x
         self.y = y
-        self.path_x = []
-        self.path_y = []
+        self.parent_x = []
+        self.parent_y = []
 
 # check collision
 def collision(x1,y1,x2,y2):
@@ -74,89 +76,137 @@ def nearest_node(x,y):
     return temp_dist.index(min(temp_dist))
 
 # generate a random point in the image space
-def rnd_point():
+def rnd_point(h,l):
     new_y = random.randint(0, h)
     new_x = random.randint(0, l)
     return (new_x,new_y)
 
 
+def RRT(img, img2, start, end, stepSize):
+    h,l= img.shape # dim of the loaded image
+    # print(img.shape) # (384, 683)
+    # print(h,l)
 
-# loading the maze
-img = cv2.imread('world2.png',0) # load grayscale image
-img2 = cv2.imread('world2.png',1)
-start = (20,20) # starting coordinate
-end = (450,250) # target coordinate
-stepSize = 20 # stepsize for RRT
-h,l= img.shape # dim of the loaded image
-# print(img.shape) # (384, 683)
-# print(h,l)
+    # insert the starting point in the node class
+    # node_list = [0] # list to store all the node points         
+    node_list[0] = Nodes(start[0],start[1])
+    node_list[0].parent_x.append(start[0])
+    node_list[0].parent_y.append(start[1])
 
-node_list = [0] # list to store all the node points
+    # display start and end
+    cv2.circle(img2, (start[0],start[1]), 5,(0,0,255),thickness=3, lineType=8)
+    cv2.circle(img2, (end[0],end[1]), 5,(0,0,255),thickness=3, lineType=8)
 
-# insert the starting point in the node class
-node_list[0] = Nodes(start[0],start[1])
-node_list[0].path_x.append(start[0])
-node_list[0].path_y.append(start[1])
+    i=1
+    pathFound = False
+    while pathFound==False:
+        nx,ny = rnd_point(h,l)
+        print("Random points:",nx,ny)
 
-# display start and end
-cv2.circle(img2, (start[0],start[1]), 5,(0,0,255),thickness=3, lineType=8)
-cv2.circle(img2, (end[0],end[1]), 5,(0,0,255),thickness=3, lineType=8)
+        nearest_ind = nearest_node(nx,ny)
+        nearest_x = node_list[nearest_ind].x
+        nearest_y = node_list[nearest_ind].y
+        print("Nearest node coordinates:",nearest_x,nearest_y)
 
-i=1
-pathFound = False
-while pathFound==False:
-    nx,ny = rnd_point()
-    print("Random points:",nx,ny)
+        #check direct connection
+        tx,ty,directCon,nodeCon = check_collision(nx,ny,nearest_x,nearest_y)
+        print("Check collision:",tx,ty,directCon,nodeCon)
 
-    nearest_ind = nearest_node(nx,ny)
-    nearest_x = node_list[nearest_ind].x
-    nearest_y = node_list[nearest_ind].y
-    print("Nearest node coordinates:",nearest_x,nearest_y)
+        if directCon and nodeCon:
+            node_list.append(i)
+            node_list[i] = Nodes(tx,ty)
+            node_list[i].parent_x = node_list[nearest_ind].parent_x.copy()
+            node_list[i].parent_y = node_list[nearest_ind].parent_y.copy()
+            node_list[i].parent_x.append(tx)
+            node_list[i].parent_y.append(ty)
 
-    #check direct connection
-    tx,ty,directCon,nodeCon = check_collision(nx,ny,nearest_x,nearest_y)
-    print("Check collision:",tx,ty,directCon,nodeCon)
+            cv2.circle(img2, (int(tx),int(ty)), 2,(0,0,255),thickness=3, lineType=8)
+            cv2.line(img2, (int(tx),int(ty)), (int(node_list[nearest_ind].x),int(node_list[nearest_ind].y)), (0,255,0), thickness=1, lineType=8)
+            cv2.line(img2, (int(tx),int(ty)), (end[0],end[1]), (255,0,0), thickness=2, lineType=8)
 
-    if directCon and nodeCon:
-        node_list.append(i)
-        node_list[i] = Nodes(tx,ty)
-        node_list[i].path_x = node_list[nearest_ind].path_x.copy()
-        node_list[i].path_y = node_list[nearest_ind].path_y.copy()
-        node_list[i].path_x.append(tx)
-        node_list[i].path_y.append(ty)
+            print("Path has been found")
+            #print("parent_x",node_list[i].parent_x)
+            for j in range(len(node_list[i].parent_x)-1):
+                cv2.line(img2, (int(node_list[i].parent_x[j]),int(node_list[i].parent_y[j])), (int(node_list[i].parent_x[j+1]),int(node_list[i].parent_y[j+1])), (255,0,0), thickness=2, lineType=8)
+            # cv2.waitKey(1)
+            cv2.imwrite("media/"+str(i)+".jpg",img2)
+            cv2.imwrite("out.jpg",img2)
+            break
 
-        cv2.circle(img2, (int(tx),int(ty)), 2,(0,0,255),thickness=3, lineType=8)
-        cv2.line(img2, (int(tx),int(ty)), (int(node_list[nearest_ind].x),int(node_list[nearest_ind].y)), (0,255,0), thickness=1, lineType=8)
-        cv2.line(img2, (int(tx),int(ty)), (end[0],end[1]), (255,0,0), thickness=2, lineType=8)
+        elif nodeCon:
+            print("Nodes connected")
+            node_list.append(i)
+            node_list[i] = Nodes(tx,ty)
+            node_list[i].parent_x = node_list[nearest_ind].parent_x.copy()
+            node_list[i].parent_y = node_list[nearest_ind].parent_y.copy()
+            # print(i)
+            # print(node_list[nearest_ind].parent_y)
+            node_list[i].parent_x.append(tx)
+            node_list[i].parent_y.append(ty)
+            i=i+1
+            # display
+            cv2.circle(img2, (int(tx),int(ty)), 2,(0,0,255),thickness=3, lineType=8)
+            cv2.line(img2, (int(tx),int(ty)), (int(node_list[nearest_ind].x),int(node_list[nearest_ind].y)), (0,255,0), thickness=1, lineType=8)
+            cv2.imwrite("media/"+str(i)+".jpg",img2)
+            cv2.imshow("sdc",img2)
+            cv2.waitKey(1)
+            continue
 
-        print("Path has been found")
-        #print("path_x",node_list[i].path_x)
-        for j in range(len(node_list[i].path_x)-1):
-            cv2.line(img2, (int(node_list[i].path_x[j]),int(node_list[i].path_y[j])), (int(node_list[i].path_x[j+1]),int(node_list[i].path_y[j+1])), (255,0,0), thickness=2, lineType=8)
-        # cv2.waitKey(1)
-        cv2.imwrite("media/"+str(i)+".jpg",img2)
-        cv2.imwrite("out.jpg",img2)
-        break
+        else:
+            print("No direct con. and no node con. :( Generating new rnd numbers")
+            continue
 
-    elif nodeCon:
-        print("Nodes connected")
-        node_list.append(i)
-        node_list[i] = Nodes(tx,ty)
-        node_list[i].path_x = node_list[nearest_ind].path_x.copy()
-        node_list[i].path_y = node_list[nearest_ind].path_y.copy()
-        # print(i)
-        # print(node_list[nearest_ind].path_y)
-        node_list[i].path_x.append(tx)
-        node_list[i].path_y.append(ty)
-        i=i+1
-        # display
-        cv2.circle(img2, (int(tx),int(ty)), 2,(0,0,255),thickness=3, lineType=8)
-        cv2.line(img2, (int(tx),int(ty)), (int(node_list[nearest_ind].x),int(node_list[nearest_ind].y)), (0,255,0), thickness=1, lineType=8)
-        cv2.imwrite("media/"+str(i)+".jpg",img2)
-        cv2.imshow("sdc",img2)
-        cv2.waitKey(1)
-        continue
+def draw_circle(event,x,y,flags,param):
+    global coordinates
+    if event == cv2.EVENT_LBUTTONDBLCLK:
+        cv2.circle(img2,(x,y),5,(255,0,0),-1)
+        coordinates.append(x)
+        coordinates.append(y)
 
-    else:
-        print("No direct con. and no node con. :( Generating new rnd numbers")
-        continue
+
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(description = 'Below are the params:')
+    parser.add_argument('-p', type=str, default='world2.png',metavar='ImagePath', action='store', dest='imagePath',
+                    help='Path of the image containing mazes')
+    parser.add_argument('-s', type=int, default=10,metavar='Stepsize', action='store', dest='stepSize',
+                    help='Step-size to be used for RRT branches')
+    parser.add_argument('-start', type=int, default=[20,20], metavar='startCoord', dest='start', nargs='+',
+                    help='Starting position in the maze')
+    parser.add_argument('-stop', type=int, default=[450,250], metavar='stopCoord', dest='stop', nargs='+',
+                    help='End position in the maze')
+    parser.add_argument('-selectPoint', help='Select start and end points from figure', action='store_true')
+
+    args = parser.parse_args()
+
+    # remove previously stored data
+    try:
+      os.system("rm -rf media")
+    except:
+      print("Dir already clean")
+    os.mkdir("media")
+
+    img = cv2.imread(args.imagePath,0) # load grayscale maze image
+    img2 = cv2.imread(args.imagePath) # load colored maze image
+    start = tuple(args.start) #(20,20) # starting coordinate
+    end = tuple(args.stop) #(450,250) # target coordinate
+    stepSize = args.stepSize # stepsize for RRT
+    node_list = [0] # list to store all the node points
+
+    coordinates=[]
+    if args.selectPoint:
+        print("Select start and end points by double clicking, press 'escape' to exit")
+        cv2.namedWindow('image')
+        cv2.setMouseCallback('image',draw_circle)
+        while(1):
+            cv2.imshow('image',img2)
+            k = cv2.waitKey(20) & 0xFF
+            if k == 27:
+                break
+        # print(coordinates)
+        start=(coordinates[0],coordinates[1])
+        end=(coordinates[2],coordinates[3])
+
+    # run the RRT algorithm 
+    RRT(img, img2, start, end, stepSize)

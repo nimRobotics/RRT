@@ -19,6 +19,8 @@ Example `python3 rrt.py -selectPoint -p world4.png -s 20`. The flag `-selectPoin
 
 ![RRT sample output 3](samples/out3.jpg)
 
+![RRT sample output 4](samples/out4.jpg)
+
 # License 
 
 MIT

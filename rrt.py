@@ -45,19 +45,25 @@ def check_collision(x1,y1,x2,y2):
     print("theta",theta)
     print("check_collision",x,y)
 
-    # TODO: trim the branch if its going out
-
-    # check direct connection
-    if collision(x,y,end[0],end[1]):
+    # TODO: trim the branch if its going out of image area
+    # print("Image shape",img.shape)
+    hy,hx=img.shape
+    if y<0 or y>hy or x<0 or x>hx:
+        print("Point out of image bound")
         directCon = False
-    else:
-        directCon=True
-
-    # check connection between two nodes
-    if collision(x,y,x2,y2):
         nodeCon = False
     else:
-        nodeCon = True
+        # check direct connection
+        if collision(x,y,end[0],end[1]):
+            directCon = False
+        else:
+            directCon=True
+
+        # check connection between two nodes
+        if collision(x,y,x2,y2):
+            nodeCon = False
+        else:
+            nodeCon = True
 
     return(x,y,directCon,nodeCon)
 
@@ -113,6 +119,7 @@ def RRT(img, img2, start, end, stepSize):
         print("Check collision:",tx,ty,directCon,nodeCon)
 
         if directCon and nodeCon:
+            print("Node can connect directly with end")
             node_list.append(i)
             node_list[i] = Nodes(tx,ty)
             node_list[i].parent_x = node_list[nearest_ind].parent_x.copy()

@@ -171,6 +171,13 @@ def draw_circle(event,x,y,flags,param):
         coordinates.append(y)
 
 
+def RRTstar(img, img2, start, end, stepSize):
+    """
+    add rrt* implementation
+    """
+    pass
+
+
 
 if __name__ == '__main__':
 

@@ -24,3 +24,9 @@ Example `python3 rrt.py -selectPoint -p world4.png -s 20`. The flag `-selectPoin
 # License 
 
 MIT
+
+# TODO
+-[] A*
+-[] BFS
+-[] DFS
+-[] Make notebooks

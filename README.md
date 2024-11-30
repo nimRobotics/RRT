@@ -1,6 +1,6 @@
 # RRT
 
-For more info visit the [blog](https://nimrobotics.github.io/2019/12/23/rrt.html)
+For more info visit the [blog](https://nimrobotics.com/blog/2019/rrt/)
 
 **Author(s):** Aakash Yadav
 [![](https://img.shields.io/twitter/follow/nimrobotics.svg?style=social)](https://twitter.com/intent/follow?screen_name=nimrobotics)
